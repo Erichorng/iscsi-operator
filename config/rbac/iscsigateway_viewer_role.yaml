@@ -1,0 +1,27 @@
+# permissions for end users to view iscsigateways.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: iscsigateway-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: iscsi-operator
+    app.kubernetes.io/part-of: iscsi-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: iscsigateway-viewer-role
+rules:
+- apiGroups:
+  - iscsi.ruohwai
+  resources:
+  - iscsigateways
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - iscsi.ruohwai
+  resources:
+  - iscsigateways/status
+  verbs:
+  - get

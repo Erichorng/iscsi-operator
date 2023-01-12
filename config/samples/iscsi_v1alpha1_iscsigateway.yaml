@@ -1,0 +1,12 @@
+apiVersion: iscsi.ruohwai/v1alpha1
+kind: Iscsigateway
+metadata:
+  labels:
+    app.kubernetes.io/name: iscsigateway
+    app.kubernetes.io/instance: iscsigateway-sample
+    app.kubernetes.io/part-of: iscsi-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: iscsi-operator
+  name: iscsigateway-sample
+spec:
+  # TODO(user): Add fields here
