@@ -28,14 +28,42 @@ type IscsigatewaySpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Iscsigateway. Edit iscsigateway_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// GatewayName is an optional string that lets you define an ISCSI gateway
+	// name. If unset, the name will be defived automatically.
+	// +optional
+	Target *IscsiTargetSpec `json:"target"`
+	CephConfig string `json:"cephConfig"`
+	IscsiConfig string `json:"iscsiConfig"`
+	HostConfig string `json:"hostConfig"`
+	Scale int `json:"scale"`
+	ContainerImage string `json:"containerImage"` //maybe move to global config
+	PoolName string `json:"poolName"` // maybe mobe to global config
+}
+
+type IscsiTargetSpec struct {
+	TargetName string `json:"targetName"`
+	Host *IscsiHostSpec `json:"host"`
+	DiskImage *IscsiDiskImageSpec `json:"diskImage"`
+	Gateways string `json:"gateways"`
+}
+
+type IscsiHostSpec struct {
+	HostName string `json:"hostName"`
+	Username string `json:"userName"`
+	Password string `json:"password"`
+}
+
+type IscsiDiskImageSpec struct {
+	ImageSize string `json:"imageSize"`
+	DiskImageName string `json:"diskImageName"`
+	PoolName string `json:"poolName"` //default "rbd"
 }
 
 // IscsigatewayStatus defines the observed state of Iscsigateway
 type IscsigatewayStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	ServerGroup string `json:"serverGroup"`
 }
 
 //+kubebuilder:object:root=true
