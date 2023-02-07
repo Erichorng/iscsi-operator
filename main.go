@@ -17,8 +17,9 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"os"
+
+	flag "github.com/spf13/pflag"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -33,6 +34,7 @@ import (
 
 	iscsiv1alpha1 "github.com/Erichong/iscsi-operator/api/v1alpha1"
 	"github.com/Erichong/iscsi-operator/controllers"
+	"github.com/Erichong/iscsi-operator/internal/conf"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -49,6 +51,7 @@ func init() {
 }
 
 func main() {
+	confSource := conf.NewSource()
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -57,13 +60,24 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
+
+	flag.CommandLine.AddFlagSet(confSource.Flags())
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
+	setupLog.Info("Initializing Manager", "ProgramName", os.Args[0])
+
+	if err := conf.Load(confSource); err != nil {
+		setupLog.Error(err, "unable to configure")
+		os.Exit(1)
+	}
+
+	if err := conf.Get().Validate(); err != nil {
+		setupLog.Error(err, "invalid configuration", "config", conf.Get())
+		os.Exit(1)
+	}
+	setupLog.Info("loaded configuration successfully", "config", conf.Get())
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,

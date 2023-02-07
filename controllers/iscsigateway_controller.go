@@ -47,7 +47,9 @@ type IscsigatewayReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
 func (r *IscsigatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	//_ = log.FromContext(ctx, "iscsigateway")
+	reqLogger := log.FromContext(ctx)
+	reqLogger.Info("Reconfiling IscsiGateway")
 
 	// TODO(user): your logic here
 
