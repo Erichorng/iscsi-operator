@@ -31,32 +31,33 @@ type IscsigatewaySpec struct {
 	// GatewayName is an optional string that lets you define an ISCSI gateway
 	// name. If unset, the name will be defived automatically.
 	// +optional
-	Target *IscsiTargetSpec `json:"target"`
-	CephConfig string `json:"cephConfig"`
-	IscsiConfig string `json:"iscsiConfig"`
-	HostConfig string `json:"hostConfig"`
-	Scale int `json:"scale"`
-	ContainerImage string `json:"containerImage"` //maybe move to global config
-	PoolName string `json:"poolName"` // maybe mobe to global config
+	TargetName string             `json:"targetname"`
+	Storage    []IscsiStorageSpec `json:"storage"`
+	Hosts      []IscsiHostSpec    `json:"hosts"`
+	Scale      int                `json:"scale"`
 }
 
-type IscsiTargetSpec struct {
-	TargetName string `json:"targetName"`
-	Host *IscsiHostSpec `json:"host"`
-	DiskImage *IscsiDiskImageSpec `json:"diskImage"`
-	Gateways string `json:"gateways"`
+type IscsiStorageSpec struct {
+	PoolName string          `json:"poolname"`
+	Disks    []IscsiDiskSpec `json:"disks"`
+}
+
+type IscsiDiskSpec struct {
+	DiskName string `json:"diskname"`
+	DiskSize string `json:"disksize"`
 }
 
 type IscsiHostSpec struct {
 	HostName string `json:"hostName"`
-	Username string `json:"userName"`
-	Password string `json:"password"`
+
+	Username string         `json:"userName"`
+	Password string         `json:"password"`
+	Luns     []IscsiLunSpec `json:"luns"`
 }
 
-type IscsiDiskImageSpec struct {
-	ImageSize string `json:"imageSize"`
-	DiskImageName string `json:"diskImageName"`
-	PoolName string `json:"poolName"` //default "rbd"
+type IscsiLunSpec struct {
+	PoolName string `json:"poolname"`
+	DiskName string `json:"diskname"`
 }
 
 // IscsigatewayStatus defines the observed state of Iscsigateway

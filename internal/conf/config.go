@@ -13,11 +13,17 @@ var DefaultOperatorConfig = OperatorConfig{
 	IscsiContainerImage: "docker.com/ruohwai/iscsi:v17.2.2",
 	IscsiContainerName:  "iscsi",
 	PoolName:            "rbd",
+	Hostname:            "iqn.0000.default:client",
+	User:                "IscsiUser",
+	Password:            "1234",
 }
 
 type OperatorConfig struct {
 	IscsiContainerImage string
 	IscsiContainerName  string
+	User                string
+	Password            string
+	Hostname            string
 	PoolName            string
 }
 
@@ -40,6 +46,9 @@ func NewSource() *Source {
 	v.SetDefault("iscsi-container-image", d.IscsiContainerImage)
 	v.SetDefault("iscsi-container-name", d.IscsiContainerName)
 	v.SetDefault("iscsi-pool-name", d.PoolName)
+	v.SetDefault("iscsi-username", d.User)
+	v.SetDefault("iscsi-password", d.Password)
+	v.SetDefault("iscsi-host", d.Hostname)
 	return &Source{v: v}
 }
 
