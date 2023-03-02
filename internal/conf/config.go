@@ -12,19 +12,27 @@ import (
 var DefaultOperatorConfig = OperatorConfig{
 	IscsiContainerImage: "docker.com/ruohwai/iscsi:v17.2.2",
 	IscsiContainerName:  "iscsi",
+	ImagePullPolicy:     "IfNotPresent",
 	PoolName:            "rbd",
 	Hostname:            "iqn.0000.default:client",
 	User:                "IscsiUser",
 	Password:            "1234",
+	StatePVCSize:        "1G",
+	ApiPort:             5001,
+	//IscsiPort:           3260,
 }
 
 type OperatorConfig struct {
 	IscsiContainerImage string
 	IscsiContainerName  string
+	ImagePullPolicy     string
 	User                string
 	Password            string
 	Hostname            string
 	PoolName            string
+	StatePVCSize        string
+	ApiPort             int
+	//IscsiPort           int
 }
 
 func (oc *OperatorConfig) Validate() error {
@@ -49,6 +57,10 @@ func NewSource() *Source {
 	v.SetDefault("iscsi-username", d.User)
 	v.SetDefault("iscsi-password", d.Password)
 	v.SetDefault("iscsi-host", d.Hostname)
+	v.SetDefault("state-pvc-size", d.StatePVCSize)
+	v.SetDefault("image-pull-policy", d.ImagePullPolicy)
+	v.SetDefault("api-port", d.ApiPort)
+	//v.SetDefault("iscsi-port", d.IscsiPort)
 	return &Source{v: v}
 }
 
@@ -75,7 +87,7 @@ func (s *Source) Read() (*OperatorConfig, error) {
 			return nil, err
 		}
 	}
-	v.SetEnvPrefix("SAMBA_OP")
+	v.SetEnvPrefix("ISCSI_OP")
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	v.AutomaticEnv()
 

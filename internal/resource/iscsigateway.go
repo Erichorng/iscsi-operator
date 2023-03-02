@@ -8,12 +8,14 @@ import (
 	"github.com/Erichong/iscsi-operator/internal/conf"
 	pln "github.com/Erichong/iscsi-operator/internal/planner"
 	"github.com/go-logr/logr"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	rtclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -22,10 +24,11 @@ import (
 const gatewayfinalizer = "gatewayFinalizer"
 
 type IscsiGatewayManager struct {
-	client rtclient.Client
-	scheme *runtime.Scheme
-	logger logr.Logger
-	cfg    *conf.OperatorConfig
+	client   rtclient.Client
+	scheme   *runtime.Scheme
+	recorder record.EventRecorder
+	logger   logr.Logger
+	cfg      *conf.OperatorConfig
 }
 
 func NewIscsiGatewayManager(
@@ -97,6 +100,19 @@ func (m *IscsiGatewayManager) Update(
 	}
 
 	// ceph config
+	if planner.Scale() == 1 {
+		// TODO
+
+	} else {
+		if result := m.updateClusterState(ctx, planner); result.Yield() {
+			return result
+		}
+	}
+
+	// Update iscsi service
+
+	m.logger.Info("Done updating iscsi gateway resources")
+	return Done
 
 }
 
@@ -243,4 +259,77 @@ func (m *IscsiGatewayManager) updateConfiguration(
 		return nil, false, err
 	}
 	return planner, true, nil
+}
+
+func (m *IscsiGatewayManager) updateClusterState(
+	ctx context.Context,
+	planner *pln.Planner) Result {
+
+	_, created, err := m.getOrCreateStatePVC(
+		ctx, planner, planner.Iscsigateway.Namespace)
+	if err != nil {
+		return Result{err: err}
+	}
+	if created {
+		m.logger.Info("Created shared state PVC")
+		return Requeue
+	}
+
+	statefulset, created, err := m.getOrCreateStatefulSet(
+		ctx, planner, planner.Iscsigateway.Namespace)
+	if err != nil {
+		return Result{err: err}
+	}
+	if created {
+		m.logger.Info("Created StatefulSet")
+		m.recorder.Eventf(planner.Iscsigateway,
+			EventNormal,
+			ReasonCreatedStatefulSet,
+			"Create stateful set %s for IscsiGateway", statefulset.Name)
+		return Requeue
+	}
+
+	changed, err := m.claimOwnership(ctx, planner.Iscsigateway, statefulset)
+	if err != nil {
+		return Result{err: err}
+	} else if changed {
+		m.logger.Info("Updated statefulSet ownership")
+		return Requeue
+	}
+	resized, err := m.updateStatefulSetSize(
+		ctx, statefulset,
+		int32(planner.Scale()))
+	if err != nil {
+		return Result{err: err}
+	} else if resized {
+		m.logger.Info("Resized statefulSet")
+		return Requeue
+	}
+	return Done
+}
+
+func (m *IscsiGatewayManager) updateStatefulSetSize(
+	ctx context.Context,
+	ss *appsv1.StatefulSet,
+	size int32) (bool, error) {
+
+	if *ss.Spec.Replicas < size {
+		ss.Spec.Replicas = &size
+		err := m.client.Update(ctx, ss)
+		if err != nil {
+			m.logger.Error(
+				err,
+				"Failed to update StatefulSet",
+				"StatefulSet.Namespace", ss.Namespace,
+				"StatefulSet.Name", ss.Name)
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
+
+}
+
+func sharedStatePVCName(planner *pln.Planner) string {
+	return planner.InstanceName() + "-state"
 }
