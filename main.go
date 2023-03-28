@@ -104,8 +104,9 @@ func main() {
 	}
 
 	if err = (&controllers.IscsigatewayReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("IscsiGateway"),
+		Recorder: mgr.GetEventRecorderFor("iscsigateway-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Iscsigateway")
 		os.Exit(1)

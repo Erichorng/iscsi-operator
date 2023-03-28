@@ -22,12 +22,13 @@ import (
 )
 
 const gatewayfinalizer = "gatewayFinalizer"
+const tcmuDaemonSet = "tcmu-runner"
 
 type IscsiGatewayManager struct {
 	client   rtclient.Client
 	scheme   *runtime.Scheme
 	recorder record.EventRecorder
-	logger   logr.Logger
+	logger   Logger
 	cfg      *conf.OperatorConfig
 }
 
@@ -35,12 +36,14 @@ func NewIscsiGatewayManager(
 	client rtclient.Client,
 	scheme *runtime.Scheme,
 	logger logr.Logger,
+	recorder record.EventRecorder,
 ) *IscsiGatewayManager {
 	return &IscsiGatewayManager{
-		client: client,
-		scheme: scheme,
-		logger: logger,
-		cfg:    conf.Get(),
+		client:   client,
+		scheme:   scheme,
+		recorder: recorder,
+		logger:   logger,
+		cfg:      conf.Get(),
 	}
 }
 
@@ -79,6 +82,19 @@ func (m *IscsiGatewayManager) Update(
 		"IscsiGateway.Name", instance.Name,
 		"IscsiGateway.UID", instance.UID,
 	)
+
+	// check cephconfig
+	err := m.checkCephConfig(ctx, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			m.logger.Error(err,
+				"Can't find cephConfigMap. Please create configMap contains ceph.conf, keyring and iscsigateway.cfg")
+			return Result{err: err}
+		}
+		m.logger.Error(err, "Failed to get cephConfigMap")
+		return Result{err: err}
+	}
+
 	changed, err := m.addFinalizer(ctx, instance)
 	if err != nil {
 		return Result{err: err}
@@ -99,9 +115,22 @@ func (m *IscsiGatewayManager) Update(
 		return result
 	}
 
-	// ceph config
+	// make sure tcmu-runner daemon set is running
+	success, err := m.updateTcmuRunner(ctx, planner)
+	if success {
+		m.logger.Info("tcmu-runner daemonSet exist.",
+			"Namespace:", instance.Namespace,
+			"Name:", tcmuDaemonSet,
+		)
+	}
+	if err != nil {
+		return Result{err: err}
+	}
+
 	if planner.Scale() == 1 {
 		// TODO
+		m.logger.Info("Please set the scale to a number greater then 1. Do not allow single node service")
+		return Done
 
 	} else {
 		if result := m.updateClusterState(ctx, planner); result.Yield() {
@@ -132,14 +161,45 @@ func (m *IscsiGatewayManager) Finalize(
 	return Done
 }
 
+func (m *IscsiGatewayManager) checkCephConfig(
+	ctx context.Context,
+	ig *iscsigateway.Iscsigateway) error {
+
+	found := &corev1.ConfigMap{}
+	cmNsname := types.NamespacedName{
+		Namespace: ig.Namespace,
+		Name:      ig.Spec.CephConfig,
+	}
+	err := m.client.Get(ctx, cmNsname, found)
+	if err == nil {
+		return nil
+	}
+	return err
+}
+
 func (m *IscsiGatewayManager) addFinalizer(
 	ctx context.Context,
-	instance *iscsigateway.Iscsigateway) (bool, error) {
+	ig *iscsigateway.Iscsigateway) (bool, error) {
 
-	if controllerutil.ContainsFinalizer(instance, gatewayfinalizer) {
-		return true, m.client.Update(ctx, instance)
+	if controllerutil.ContainsFinalizer(ig, gatewayfinalizer) {
+		return true, m.client.Update(ctx, ig)
 	}
 	return false, nil
+}
+
+func (m *IscsiGatewayManager) updateTcmuRunner(
+	ctx context.Context, pl *pln.Planner) (bool, error) {
+
+	// check if tcmu-runner exist
+	err := m.getOrCreateTcmuRunner(ctx, tcmuDaemonSet, pl)
+
+	if err != nil {
+		m.logger.Info("Successfully find tcmu-runner daemonset")
+		return false, err
+	}
+	return true, nil
+
+	// create tcmu-runner if not exist
 }
 
 func (m *IscsiGatewayManager) updateConfigMap(
@@ -154,7 +214,7 @@ func (m *IscsiGatewayManager) updateConfigMap(
 		m.logger.Info("Created ConfigMap")
 		return nil, Requeue
 	}
-	// is this step already finish in getorcreate?
+	// is this step already finish in getOrCreate?
 	changed, err := m.claimOwnership(ctx, ig, configMap)
 	if err != nil {
 		return nil, Result{err: err}

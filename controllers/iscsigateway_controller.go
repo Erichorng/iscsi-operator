@@ -19,18 +19,20 @@ package controllers
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	"github.com/go-logr/logr"
 
 	iscsiv1alpha1 "github.com/Erichong/iscsi-operator/api/v1alpha1"
+	"github.com/Erichong/iscsi-operator/internal/resource"
+	"k8s.io/client-go/tools/record"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // IscsigatewayReconciler reconciles a Iscsigateway object
 type IscsigatewayReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Log      logr.Logger
+	Recorder record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=iscsi.ruohwai,resources=iscsigateways,verbs=get;list;watch;create;update;patch;delete
@@ -47,12 +49,20 @@ type IscsigatewayReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
 func (r *IscsigatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	reqLogger := log.Log.WithName("IscsiGateway")
-	reqLogger.Info("Reconciling SmbShare")
 
-	// TODO(user): your logic here
+	reqLogger := r.Log.WithValues("iscsigateway", req.NamespacedName)
+	reqLogger.Info("Reconciling Iscsigateway")
 
-	return ctrl.Result{}, nil
+	IscsiGatewayManager := resource.NewIscsiGatewayManager(
+		r, r.Scheme(), reqLogger, r.Recorder)
+
+	res := IscsiGatewayManager.Process(ctx, req.NamespacedName)
+	err := res.Err()
+	if res.Requeue() {
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	return ctrl.Result{}, err
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -60,4 +70,5 @@ func (r *IscsigatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&iscsiv1alpha1.Iscsigateway{}).
 		Complete(r)
+	// TODO: add Owns
 }

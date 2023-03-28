@@ -30,6 +30,15 @@ func sameStringSlice(x, y []string) bool {
 	return len(diff) == 0
 }
 
+func exist(ss string, l []string) bool {
+	for _, s := range l {
+		if s == ss {
+			return true
+		}
+	}
+	return false
+}
+
 func (pl *Planner) targetName() string {
 	year := strconv.Itoa(time.Now().Year())
 	day := strconv.Itoa(time.Now().Day())
@@ -118,6 +127,31 @@ func (pl *Planner) Update() (changed bool, err error) {
 				changed = true
 			}
 		}
+		// if disk removed
+		allDisk := pl.ConfigState.Storage[goalPoolName]
+		new_disk_list := make([]string, len(pl.Iscsigateway.Spec.Storage[i].Disks))
+		for idx, w := range pl.Iscsigateway.Spec.Storage[i].Disks {
+			new_disk_list[idx] = w.DiskName
+		}
+		for k := range allDisk {
+			if !exist(k, new_disk_list) {
+				delete(pl.ConfigState.Storage[goalPoolName], k)
+				changed = true
+			}
+		}
+	}
+
+	//check if there are pools removed
+	new_pool_list := make([]string, len(pl.Iscsigateway.Spec.Storage))
+	for i := 0; i < len(pl.Iscsigateway.Spec.Storage); i++ {
+		new_pool_list[i] = pl.Iscsigateway.Spec.Storage[i].PoolName
+	}
+	for k := range pl.ConfigState.Storage {
+		if !exist(k, new_pool_list) {
+			// remove the pool from configstate
+			delete(pl.ConfigState.Storage, k)
+			changed = true
+		}
 	}
 
 	// host section
@@ -156,6 +190,15 @@ func (pl *Planner) Update() (changed bool, err error) {
 			pl.ConfigState.Hosts[goalHostname] = host
 		}
 	}
+
+	new_host_list := make([]string, len(pl.Iscsigateway.Spec.Hosts))
+	for k := range pl.ConfigState.Hosts {
+		if !exist(k, new_host_list) {
+			delete(pl.ConfigState.Hosts, k)
+			changed = true
+		}
+	}
+
 	return
 }
 

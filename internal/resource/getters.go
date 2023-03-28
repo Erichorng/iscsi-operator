@@ -291,3 +291,89 @@ func (m *IscsiGatewayManager) getExistingPVC(
 	}
 	return nil, nil
 }
+
+func (m *IscsiGatewayManager) getOrCreateTcmuRunner(
+	ctx context.Context,
+	name string,
+	pl *pln.Planner) error {
+
+	ds, err := m.getExistingDaemonset(ctx, name, pl.Iscsigateway)
+
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+	}
+
+	if ds != nil {
+		return nil
+	}
+
+	// create
+	m.logger.Info("Start creating tcmu-runner daemonset")
+	ds = buildDaemonset(ctx, name, pl)
+
+	err = controllerutil.SetControllerReference(
+		pl.Iscsigateway, ds, m.scheme)
+	if err != nil {
+		m.logger.Error(
+			err,
+			"Failed to set controller reference",
+			"Iscsigateway.Namespace", pl.Iscsigateway.Namespace,
+			"Iscsigateway.Name", pl.Iscsigateway.Name,
+			"Daemonset.Namespace", ds.Namespace,
+			"Daemonset.Name", ds.Name,
+		)
+		return err
+	}
+	m.logger.Info(
+		"Creating a new DaemonSet",
+		"Iscsigateway.Namespace", pl.Iscsigateway.Namespace,
+		"Iscsigateway.Name", pl.Iscsigateway.Name,
+		"DaemonSet.Namespace", ds.Namespace,
+		"DaemonSet.Name", ds.Name,
+	)
+	err = m.client.Create(ctx, ds)
+	if err != nil {
+		m.logger.Error(
+			err,
+			"Failed to create new DaemonSet",
+			"Iscsigateway.Namespace", pl.Iscsigateway.Namespace,
+			"Iscsigateway.Name", pl.Iscsigateway.Name,
+			"DaemonSet.Namespace", ds.Namespace,
+			"DaemonSet.Name", ds.Name,
+		)
+		return err
+	}
+	return nil
+}
+
+func (m *IscsiGatewayManager) getExistingDaemonset(
+	ctx context.Context,
+	name string,
+	ig *iscsigateway.Iscsigateway) (*appsv1.DaemonSet, error) {
+
+	found := &appsv1.DaemonSet{}
+	dsNsname := types.NamespacedName{
+		Namespace: ig.Namespace,
+		Name:      name,
+	}
+	err := m.client.Get(ctx, dsNsname, found)
+
+	if err == nil {
+		return found, nil
+	}
+
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			m.logger.Error(
+				err,
+				"Failed to get DaemonSet",
+				"DaemonSet.Namespace", ig.Namespace,
+				"DaemonSet.Name", name,
+			)
+			return nil, err
+		}
+	}
+	return nil, nil
+}

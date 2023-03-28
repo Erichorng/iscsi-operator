@@ -6,6 +6,31 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+func buildTcmuRunnerPodSpec(pl *pln.Planner) corev1.PodSpec {
+	var (
+		volumes    = newVolKeeper()
+		containers []corev1.Container
+	)
+
+	cephVol := cephVolumeAndMount(pl)
+	volumes.add(cephVol)
+
+	devVol := devVolumeAndMount(pl)
+	volumes.add(devVol)
+
+	libVol := libVolumeAndMount(pl)
+	volumes.add(libVol)
+
+	containers = append(containers, buildTcmuCtr(pl, volumes))
+
+	podSpec := corev1.PodSpec{}
+	podSpec.Volumes = getVolumes(volumes.all())
+
+	podSpec.Containers = containers
+
+	return podSpec
+}
+
 func buildClusteredPodSpec(
 	pl *pln.Planner, sharedPVCName string) corev1.PodSpec {
 	var (
@@ -101,13 +126,32 @@ func buildIscsiCtrs(
 	return ctrs
 }
 
+func buildTcmuCtr(
+	pl *pln.Planner,
+	vols *volKeeper) corev1.Container {
+
+	mounts := getMounts(vols.all())
+	return corev1.Container{
+		Image:           pl.GlobalConfig.TcmuRunnerImage,
+		ImagePullPolicy: imagePullPolicy(pl),
+		Name:            pl.GlobalConfig.TcmuRunnerName,
+		Command: []string{
+			"/usr/sbin/init",
+		},
+		//Args: ,
+		//Env: ,
+		VolumeMounts: mounts,
+	}
+
+}
+
 func buildIscsiCtr(
 	pl *pln.Planner,
 	env []corev1.EnvVar,
 	vols *volKeeper) corev1.Container {
 
 	mounts := getMounts(vols.all())
-	apiport := pl.GetApiPort()
+	iscsiport := pl.GlobalConfig.IscsiPort
 	return corev1.Container{
 		Image:           pl.GlobalConfig.IscsiContainerImage,
 		ImagePullPolicy: imagePullPolicy(pl),
@@ -127,14 +171,14 @@ func buildIscsiCtr(
 		LivenessProbe: &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				TCPSocket: &corev1.TCPSocketAction{
-					Port: intstr.FromInt(apiport), //5001
+					Port: intstr.FromInt(iscsiport),
 				},
 			},
 		},
 		ReadinessProbe: &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				TCPSocket: &corev1.TCPSocketAction{
-					Port: intstr.FromInt(apiport),
+					Port: intstr.FromInt(iscsiport),
 				},
 			},
 		},

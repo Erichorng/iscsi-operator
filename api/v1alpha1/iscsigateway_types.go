@@ -35,7 +35,7 @@ type IscsigatewaySpec struct {
 	Storage    []IscsiStorageSpec `json:"storage"`
 	Hosts      []IscsiHostSpec    `json:"hosts"`
 	Scale      int                `json:"scale"`
-	CephConfig string
+	CephConfig string             `json:"cephconfig"`
 }
 
 type IscsiStorageSpec struct {
