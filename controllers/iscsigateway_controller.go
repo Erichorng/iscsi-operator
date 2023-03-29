@@ -23,6 +23,8 @@ import (
 
 	iscsiv1alpha1 "github.com/Erichong/iscsi-operator/api/v1alpha1"
 	"github.com/Erichong/iscsi-operator/internal/resource"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -69,6 +71,10 @@ func (r *IscsigatewayReconciler) Reconcile(ctx context.Context, req ctrl.Request
 func (r *IscsigatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&iscsiv1alpha1.Iscsigateway{}).
+		Owns(&corev1.PersistentVolumeClaim{}).
+		Owns(&corev1.ConfigMap{}).
+		Owns(&appsv1.DaemonSet{}).
+		Owns(&appsv1.StatefulSet{}).
 		Complete(r)
 	// TODO: add Owns
 }
