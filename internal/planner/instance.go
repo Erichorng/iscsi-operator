@@ -1,9 +1,9 @@
 package planner
 
 import (
-	api "github.com/Erichong/iscsi-operator/api/v1alpha1"
-	"github.com/Erichong/iscsi-operator/internal/conf"
-	"github.com/Erichong/iscsi-operator/internal/iscsicc"
+	api "github.com/Erichorng/iscsi-operator/api/v1alpha1"
+	"github.com/Erichorng/iscsi-operator/internal/conf"
+	"github.com/Erichorng/iscsi-operator/internal/iscsicc"
 )
 
 type InstanceConfiguration struct {

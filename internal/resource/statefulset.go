@@ -3,8 +3,8 @@ package resource
 import (
 	"strings"
 
-	"github.com/Erichong/iscsi-operator/internal/conf"
-	pln "github.com/Erichong/iscsi-operator/internal/planner"
+	"github.com/Erichorng/iscsi-operator/internal/conf"
+	pln "github.com/Erichorng/iscsi-operator/internal/planner"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -21,8 +21,8 @@ import (
 
 	"github.com/go-logr/logr"
 
-	iscsiv1alpha1 "github.com/Erichong/iscsi-operator/api/v1alpha1"
-	"github.com/Erichong/iscsi-operator/internal/resource"
+	iscsiv1alpha1 "github.com/Erichorng/iscsi-operator/api/v1alpha1"
+	"github.com/Erichorng/iscsi-operator/internal/resource"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"

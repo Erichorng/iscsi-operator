@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Erichong/iscsi-operator/internal/iscsicc"
+	"github.com/Erichorng/iscsi-operator/internal/iscsicc"
 )
 
 func sameStringSlice(x, y []string) bool {

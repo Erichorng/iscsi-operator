@@ -1,7 +1,7 @@
 package iscsicc
 
 import (
-	api "github.com/Erichong/iscsi-operator/api/v1alpha1"
+	api "github.com/Erichorng/iscsi-operator/api/v1alpha1"
 )
 
 type Key string

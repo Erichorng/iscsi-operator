@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	iscsigateway "github.com/Erichong/iscsi-operator/api/v1alpha1"
-	"github.com/Erichong/iscsi-operator/internal/conf"
-	pln "github.com/Erichong/iscsi-operator/internal/planner"
+	iscsigateway "github.com/Erichorng/iscsi-operator/api/v1alpha1"
+	"github.com/Erichorng/iscsi-operator/internal/conf"
+	pln "github.com/Erichorng/iscsi-operator/internal/planner"
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

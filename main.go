@@ -32,9 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	iscsiv1alpha1 "github.com/Erichong/iscsi-operator/api/v1alpha1"
-	"github.com/Erichong/iscsi-operator/controllers"
-	"github.com/Erichong/iscsi-operator/internal/conf"
+	iscsiv1alpha1 "github.com/Erichorng/iscsi-operator/api/v1alpha1"
+	"github.com/Erichorng/iscsi-operator/controllers"
+	"github.com/Erichorng/iscsi-operator/internal/conf"
 	//+kubebuilder:scaffold:imports
 )
 
