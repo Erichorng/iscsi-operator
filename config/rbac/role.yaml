@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - iscsi.ruohwai
+  resources:
+  - iscsigateways
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - iscsi.ruohwai
+  resources:
+  - iscsigateways/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - iscsi.ruohwai
+  resources:
+  - iscsigateways/status
+  verbs:
+  - get
+  - patch
+  - update
