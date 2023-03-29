@@ -1,7 +1,7 @@
 package resource
 
 import (
-	pln "github.com/Erichong/iscsi-operator/internal/planner"
+	pln "github.com/Erichorng/iscsi-operator/internal/planner"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )

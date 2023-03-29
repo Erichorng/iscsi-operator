@@ -3,7 +3,7 @@ package resource
 import (
 	"fmt"
 
-	pln "github.com/Erichong/iscsi-operator/internal/planner"
+	pln "github.com/Erichorng/iscsi-operator/internal/planner"
 	corev1 "k8s.io/api/core/v1"
 )
 

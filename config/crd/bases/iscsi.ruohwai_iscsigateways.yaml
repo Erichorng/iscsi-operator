@@ -1,0 +1,117 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.10.0
+  creationTimestamp: null
+  name: iscsigateways.iscsi.ruohwai
+spec:
+  group: iscsi.ruohwai
+  names:
+    kind: Iscsigateway
+    listKind: IscsigatewayList
+    plural: iscsigateways
+    singular: iscsigateway
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Iscsigateway is the Schema for the iscsigateways API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: IscsigatewaySpec defines the desired state of Iscsigateway
+            properties:
+              cephconfig:
+                type: string
+              hosts:
+                items:
+                  properties:
+                    hostName:
+                      type: string
+                    luns:
+                      items:
+                        properties:
+                          diskname:
+                            type: string
+                          poolname:
+                            type: string
+                        required:
+                        - diskname
+                        - poolname
+                        type: object
+                      type: array
+                    password:
+                      type: string
+                    userName:
+                      type: string
+                  required:
+                  - hostName
+                  - luns
+                  - password
+                  - userName
+                  type: object
+                type: array
+              scale:
+                type: integer
+              storage:
+                items:
+                  properties:
+                    disks:
+                      items:
+                        properties:
+                          diskname:
+                            type: string
+                          disksize:
+                            type: string
+                        required:
+                        - diskname
+                        - disksize
+                        type: object
+                      type: array
+                    poolname:
+                      type: string
+                  required:
+                  - disks
+                  - poolname
+                  type: object
+                type: array
+              targetname:
+                description: GatewayName is an optional string that lets you define
+                  an ISCSI gateway name. If unset, the name will be defived automatically.
+                type: string
+            required:
+            - cephconfig
+            - hosts
+            - scale
+            - storage
+            type: object
+          status:
+            description: IscsigatewayStatus defines the observed state of Iscsigateway
+            properties:
+              serverGroup:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
+            required:
+            - serverGroup
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,4 +1,4 @@
-module github.com/Erichong/iscsi-operator
+module github.com/Erichorng/iscsi-operator
 
 go 1.19
 
