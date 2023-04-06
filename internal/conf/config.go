@@ -25,18 +25,18 @@ var DefaultOperatorConfig = OperatorConfig{
 }
 
 type OperatorConfig struct {
-	IscsiContainerImage string
-	IscsiContainerName  string
-	TcmuRunnerImage     string
-	TcmuRunnerName      string
-	ImagePullPolicy     string
-	User                string
-	Password            string
-	Hostname            string
-	PoolName            string
-	StatePVCSize        string
-	ApiPort             int
-	IscsiPort           int
+	IscsiContainerImage string `mapstructure:"iscsi-container-image"`
+	IscsiContainerName  string `mapstructure:"iscsi-container-name"`
+	TcmuRunnerImage     string `mapstructure:"tcmu-runner-image"`
+	TcmuRunnerName      string `mapstructure:"tcmu-runner-name"`
+	ImagePullPolicy     string `mapstructure:"image-pull-policy"`
+	User                string `mapstructure:"iscsi-username"`
+	Password            string `mapstructure:"iscsi-password"`
+	Hostname            string `mapstructure:"iscsi-host"`
+	PoolName            string `mapstructure:"iscsi-pool-name"`
+	StatePVCSize        string `mapstructure:"state-pvc-size"`
+	ApiPort             int    `mapstructure:"api-port"`
+	IscsiPort           int    `mapstructure:"iscsi-port"`
 }
 
 func (oc *OperatorConfig) Validate() error {
