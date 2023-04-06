@@ -30,12 +30,16 @@ type IscsigatewaySpec struct {
 
 	// GatewayName is an optional string that lets you define an ISCSI gateway
 	// name. If unset, the name will be defived automatically.
+
+	TargetName string `json:"targetname"`
+
 	// +optional
-	TargetName string             `json:"targetname"`
-	Storage    []IscsiStorageSpec `json:"storage"`
-	Hosts      []IscsiHostSpec    `json:"hosts"`
-	Scale      int                `json:"scale"`
-	CephConfig string             `json:"cephconfig"`
+	Storage []IscsiStorageSpec `json:"storage"`
+
+	// +optional
+	Hosts      []IscsiHostSpec `json:"hosts"`
+	Scale      int             `json:"scale"`
+	CephConfig string          `json:"cephconfig"`
 }
 
 type IscsiStorageSpec struct {
@@ -49,9 +53,9 @@ type IscsiDiskSpec struct {
 }
 
 type IscsiHostSpec struct {
-	HostName string `json:"hostName"`
+	HostName string `json:"hostname"`
 
-	Username string         `json:"userName"`
+	Username string         `json:"username"`
 	Password string         `json:"password"`
 	Luns     []IscsiLunSpec `json:"luns"`
 }
@@ -65,7 +69,7 @@ type IscsiLunSpec struct {
 type IscsigatewayStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ServerGroup string `json:"serverGroup"`
+	ServerGroup string `json:"servergroup"`
 }
 
 //+kubebuilder:object:root=true

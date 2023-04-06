@@ -40,7 +40,7 @@ spec:
               hosts:
                 items:
                   properties:
-                    hostName:
+                    hostname:
                       type: string
                     luns:
                       items:
@@ -56,13 +56,13 @@ spec:
                       type: array
                     password:
                       type: string
-                    userName:
+                    username:
                       type: string
                   required:
-                  - hostName
+                  - hostname
                   - luns
                   - password
-                  - userName
+                  - username
                   type: object
                 type: array
               scale:
@@ -90,25 +90,22 @@ spec:
                   type: object
                 type: array
               targetname:
-                description: GatewayName is an optional string that lets you define
-                  an ISCSI gateway name. If unset, the name will be defived automatically.
                 type: string
             required:
             - cephconfig
-            - hosts
             - scale
-            - storage
+            - targetname
             type: object
           status:
             description: IscsigatewayStatus defines the observed state of Iscsigateway
             properties:
-              serverGroup:
+              servergroup:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 type: string
             required:
-            - serverGroup
+            - servergroup
             type: object
         type: object
     served: true
