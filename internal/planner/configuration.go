@@ -192,6 +192,9 @@ func (pl *Planner) Update() (changed bool, err error) {
 	}
 
 	new_host_list := make([]string, len(pl.Iscsigateway.Spec.Hosts))
+	for i := 0; i < len(pl.Iscsigateway.Spec.Hosts); i++ {
+		new_host_list[i] = pl.Iscsigateway.Spec.Hosts[i].HostName
+	}
 	for k := range pl.ConfigState.Hosts {
 		if !exist(k, new_host_list) {
 			delete(pl.ConfigState.Hosts, k)
