@@ -131,12 +131,16 @@ func buildTcmuCtr(
 	vols *volKeeper) corev1.Container {
 
 	mounts := getMounts(vols.all())
+	var t bool = true
 	return corev1.Container{
 		Image:           pl.GlobalConfig.TcmuRunnerImage,
 		ImagePullPolicy: imagePullPolicy(pl),
 		Name:            pl.GlobalConfig.TcmuRunnerName,
 		Command: []string{
 			"/usr/sbin/init",
+		},
+		SecurityContext: &corev1.SecurityContext{
+			Privileged: &t,
 		},
 		//Args: ,
 		//Env: ,
@@ -152,6 +156,7 @@ func buildIscsiCtr(
 
 	mounts := getMounts(vols.all())
 	iscsiport := pl.GlobalConfig.IscsiPort
+	var t bool = true
 	return corev1.Container{
 		Image:           pl.GlobalConfig.IscsiContainerImage,
 		ImagePullPolicy: imagePullPolicy(pl),
@@ -160,6 +165,9 @@ func buildIscsiCtr(
 			"systemctl start tcmu-runner",
 			"systemctl start rbd-target-gw",
 			"systemctl start rbd-target-api",
+		},
+		SecurityContext: &corev1.SecurityContext{
+			Privileged: &t,
 		},
 		Args:         pl.Args().Run("iscsi-daemon"), // no use right now
 		Env:          env,
