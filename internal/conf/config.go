@@ -10,9 +10,9 @@ import (
 )
 
 var DefaultOperatorConfig = OperatorConfig{
-	IscsiContainerImage: "docker.com/ruohwai/iscsi:v17.2.2",
+	IscsiContainerImage: "ruohwai/iscsi:v17.2.2",
 	IscsiContainerName:  "iscsi",
-	TcmuRunnerImage:     "docker.com/ruohwai/iscsi:v17.2.2.tcmu",
+	TcmuRunnerImage:     "ruohwai/iscsi:v17.2.2.tcmu",
 	TcmuRunnerName:      "tcmu-runner",
 	ImagePullPolicy:     "IfNotPresent",
 	PoolName:            "rbd",
