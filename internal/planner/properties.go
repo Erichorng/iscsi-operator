@@ -12,7 +12,7 @@ func (pl *Planner) IsClustered() bool {
 }
 
 func (pl *Planner) InstanceName() string {
-	return pl.Iscsigateway.Spec.TargetName
+	return pl.Iscsigateway.Name
 }
 
 func (pl *Planner) CephConfigName() string {
