@@ -116,15 +116,10 @@ func (m *IscsiGatewayManager) Update(
 	}
 
 	// make sure tcmu-runner daemon set is running
-	success, err := m.updateTcmuRunner(ctx, planner)
-	if success {
-		m.logger.Info("tcmu-runner daemonSet exist.",
-			"Namespace:", instance.Namespace,
-			"Name:", tcmuDaemonSet,
-		)
-	}
-	if err != nil {
-		return Result{err: err}
+	if result := m.updateTcmuRunner(ctx, planner); !result.Yield() {
+		m.logger.Info("Successfully update tcmu-runner")
+	} else {
+		return result
 	}
 
 	if planner.Scale() == 1 {
@@ -188,18 +183,26 @@ func (m *IscsiGatewayManager) addFinalizer(
 }
 
 func (m *IscsiGatewayManager) updateTcmuRunner(
-	ctx context.Context, pl *pln.Planner) (bool, error) {
+	ctx context.Context, pl *pln.Planner) Result {
 
 	// check if tcmu-runner exist
-	err := m.getOrCreateTcmuRunner(ctx, tcmuDaemonSet, pl)
+	daemonset, created, err := m.getOrCreateTcmuRunner(ctx, tcmuDaemonSet, pl)
 
 	if err != nil {
-		m.logger.Info("Successfully find tcmu-runner daemonset")
-		return false, err
+		return Result{err: err}
 	}
-	return true, nil
+	if created {
+		m.logger.Info("Created ConfigMap")
+		return Requeue
+	}
 
-	// create tcmu-runner if not exist
+	changed, err := m.claimOwnership(ctx, pl.Iscsigateway, daemonset)
+	if err != nil {
+		return Result{err: err}
+	} else if changed {
+		m.logger.Info("Update Tcmu-runner ownership")
+	}
+	return Done
 }
 
 func (m *IscsiGatewayManager) updateConfigMap(

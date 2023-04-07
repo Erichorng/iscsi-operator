@@ -295,18 +295,18 @@ func (m *IscsiGatewayManager) getExistingPVC(
 func (m *IscsiGatewayManager) getOrCreateTcmuRunner(
 	ctx context.Context,
 	name string,
-	pl *pln.Planner) error {
+	pl *pln.Planner) (*appsv1.DaemonSet, bool, error) {
 
 	ds, err := m.getExistingDaemonset(ctx, name, pl.Iscsigateway)
 
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			return err
+			return ds, false, err
 		}
 	}
 
 	if ds != nil {
-		return nil
+		return ds, false, nil
 	}
 
 	// create
@@ -324,7 +324,7 @@ func (m *IscsiGatewayManager) getOrCreateTcmuRunner(
 			"Daemonset.Namespace", ds.Namespace,
 			"Daemonset.Name", ds.Name,
 		)
-		return err
+		return ds, true, err
 	}
 	m.logger.Info(
 		"Creating a new DaemonSet",
@@ -343,9 +343,9 @@ func (m *IscsiGatewayManager) getOrCreateTcmuRunner(
 			"DaemonSet.Namespace", ds.Namespace,
 			"DaemonSet.Name", ds.Name,
 		)
-		return err
+		return ds, true, err
 	}
-	return nil
+	return ds, true, nil
 }
 
 func (m *IscsiGatewayManager) getExistingDaemonset(
