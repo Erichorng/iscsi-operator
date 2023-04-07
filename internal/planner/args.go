@@ -11,16 +11,22 @@ func (pl *Planner) Args() *IscsiContainerArgs {
 func (i *IscsiContainerArgs) Initializer(cmd string) []string {
 	args := []string{}
 	if i.planner.IsClustered() {
-		args = append(args, "--skip-if-already-init")
+		// args = append(args, "--skip-if-already-init")
+		args = append(args, "echo $ISCSI_CONTAINER_ID")
+		args = append(args, "echo $ISCSI_CONFIG")
 	}
 	args = append(args, cmd)
 	return args
 }
 
 func (i *IscsiContainerArgs) SetNode() []string {
+	//args := []string{
+	//	"set-node",
+	//	"--hostname=$(HOSTNAME)",
+	//}
 	args := []string{
-		"set-node",
-		"--hostname=$(HOSTNAME)",
+		"echo $ISCSI_CONTAINER_ID",
+		"echo $ISCSI_CONFIG",
 	}
 
 	return args
@@ -28,8 +34,10 @@ func (i *IscsiContainerArgs) SetNode() []string {
 
 func (*IscsiContainerArgs) UpdateConfigWatch() []string {
 	return []string{
-		"update-config",
-		"--watch",
+		//"update-config",
+		//"--watch",
+		"echo $ISCSI_CONTAINER_ID",
+		"echo $ISCSI_CONFIG",
 	}
 }
 
