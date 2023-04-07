@@ -108,7 +108,7 @@ func buildIscsiSetNodeCtr(
 	return corev1.Container{
 		Image:           pl.GlobalConfig.IscsiContainerImage,
 		ImagePullPolicy: imagePullPolicy(pl),
-		Name:            "Iscsi-set-node",
+		Name:            "iscsi-set-node",
 		Args:            pl.Args().SetNode(),
 		Env:             env,
 		VolumeMounts:    mounts,
