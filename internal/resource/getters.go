@@ -9,6 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	rook "github.com/rook/rook/pkg/apis/ceph.rook.io/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	kresource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
@@ -25,37 +26,32 @@ func (m *IscsiGatewayManager) getOrCreateConfigMap(
 			GlobalConfig: m.cfg,
 		},
 		nil)
-	found := &corev1.ConfigMap{}
-	// name of the configMap defaults to smbshare's name
-	cmNsname := types.NamespacedName{
-		Name:      planner.Iscsigateway.Name,
-		Namespace: ig.Namespace,
-	}
-	err := m.client.Get(ctx, cmNsname, found)
+
+	cm, err := m.getExistingConfigmap(ctx, planner.Iscsigateway.Name, ig.Namespace)
 	if err == nil {
-		return found, false, nil
+		return cm, false, nil
 	}
 	if !errors.IsNotFound(err) {
 		m.logger.Error(
 			err,
 			"Failed to get configMap",
-			"IscsiGateway.Name", planner.Iscsigateway.Name,
-			"IscsiGateway.Namespace", planner.Iscsigateway.Namespace,
-			"ConfigMap.Name", cmNsname.Name, cmNsname.Name,
-			"ConfigMap.Namespace", cmNsname.Name, cmNsname.Namespace,
+			"IscsiGateway.Name", ig.Name,
+			"IscsiGateway.Namespace", ig.Namespace,
+			"ConfigMap.Name", ig.Name,
+			"ConfigMap.Namespace", ig.Namespace,
 		)
 		return nil, false, err
 	}
 
-	configMap, err := newDefaultConfigMap(cmNsname.Name, cmNsname.Namespace)
+	configMap, err := newDefaultConfigMap(ig.Name, ig.Namespace)
 	if err != nil {
 		m.logger.Error(
 			err,
 			"Failed to create default ConfigMap",
-			"IscsiGateway.Name", planner.Iscsigateway.Name,
-			"IscsiGateway.Namespace", planner.Iscsigateway.Namespace,
-			"ConfigMap.Name", cmNsname.Name, cmNsname.Name,
-			"ConfigMap.Namespace", cmNsname.Name, cmNsname.Namespace,
+			"IscsiGateway.Name", ig.Name,
+			"IscsiGateway.Namespace", ig.Namespace,
+			"ConfigMap.Name", ig.Name,
+			"ConfigMap.Namespace", ig.Namespace,
 		)
 		return configMap, false, err
 	}
@@ -87,6 +83,23 @@ func (m *IscsiGatewayManager) getOrCreateConfigMap(
 		return configMap, false, err
 	}
 	return configMap, true, nil
+}
+
+func (m *IscsiGatewayManager) getExistingConfigmap(
+	ctx context.Context,
+	name string,
+	ns string) (*corev1.ConfigMap, error) {
+
+	found := &corev1.ConfigMap{}
+	cmNsname := types.NamespacedName{
+		Name:      name,
+		Namespace: ns,
+	}
+	err := m.client.Get(ctx, cmNsname, found)
+	if err == nil {
+		return found, nil
+	}
+	return nil, err
 }
 
 func (m *IscsiGatewayManager) getOrCreateStatefulSet(
@@ -376,4 +389,79 @@ func (m *IscsiGatewayManager) getExistingDaemonset(
 		}
 	}
 	return nil, nil
+}
+
+func (m *IscsiGatewayManager) getOrCreatePool(
+	ctx context.Context,
+	pname string, ns string,
+	ps rook.PoolSpec,
+	ig *iscsigateway.Iscsigateway) (*rook.CephBlockPool, bool, error) {
+
+	pool, err := m.getExistingPool(ctx, pname, ns)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			m.logger.Error(
+				err,
+				"Failed to find CephBlockPool",
+				"CephBlockPool.Namespace", ns,
+				"CephBlockPool.Name", pname,
+			)
+			return nil, false, err
+		}
+	}
+	if pool != nil {
+		// check if the pool belongs to itself, if not, user should set another pool name
+		finalizers := pool.GetFinalizers()
+		// pool already have 1 finalizer when created
+		if len(finalizers) > 1 {
+			if !controllerutil.ContainsFinalizer(pool, ig.Name) {
+				m.logger.Info("Pool: %s already been used. Please change a name.", pool.Name)
+				// return nothing, and just stop reconciling
+				return nil, false, nil
+			}
+		}
+		m.logger.Info("Find pool :%s belongs to iscsigateway :%s", pool.Name, ig.Name)
+		return pool, false, nil
+	}
+
+	m.logger.Info("Start creating cephblockpool.")
+
+	pool = buildPool(ctx, pname, ns, ps)
+
+	// set controller ref ??
+	if err := controllerutil.SetControllerReference(ig, pool, m.scheme); err != nil {
+		m.logger.Error(err,
+			"failed to set controllerReference on pool %s, owner: %s",
+			pool.Name, ig.Name)
+		return pool, true, err
+	}
+
+	err = m.client.Create(ctx, pool)
+
+	if err != nil {
+		m.logger.Error(
+			err,
+			"Failed to create CephBlockPool",
+			"CephBlockPool.Name", pool.Name,
+			"CephBlockPool.Namespace", pool.Namespace,
+		)
+		return pool, false, err
+	}
+	return pool, true, nil
+}
+
+func (m *IscsiGatewayManager) getExistingPool(ctx context.Context, name, ns string) (*rook.CephBlockPool, error) {
+	found := &rook.CephBlockPool{}
+	pKey := types.NamespacedName{
+		Namespace: ns,
+		Name:      name,
+	}
+	err := m.client.Get(ctx, pKey, found)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return found, nil
+
 }

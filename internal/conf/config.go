@@ -22,6 +22,7 @@ var DefaultOperatorConfig = OperatorConfig{
 	StatePVCSize:        "1G",
 	ApiPort:             5001,
 	IscsiPort:           3260,
+	RookNamespace:       "rook-ceph",
 }
 
 type OperatorConfig struct {
@@ -37,6 +38,7 @@ type OperatorConfig struct {
 	StatePVCSize        string `mapstructure:"state-pvc-size"`
 	ApiPort             int    `mapstructure:"api-port"`
 	IscsiPort           int    `mapstructure:"iscsi-port"`
+	RookNamespace       string `mapstructure:"rook-namespace"`
 }
 
 func (oc *OperatorConfig) Validate() error {
@@ -67,6 +69,7 @@ func NewSource() *Source {
 	v.SetDefault("image-pull-policy", d.ImagePullPolicy)
 	v.SetDefault("api-port", d.ApiPort)
 	v.SetDefault("iscsi-port", d.IscsiPort)
+	v.SetDefault("rook-namespace", d.RookNamespace)
 	return &Source{v: v}
 }
 

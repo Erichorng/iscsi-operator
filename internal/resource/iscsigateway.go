@@ -108,6 +108,10 @@ func (m *IscsiGatewayManager) Update(
 		return Requeue
 	}
 
+	if result := m.checkPool(ctx, instance); result.Yield() {
+		return result
+	}
+
 	var planner *pln.Planner
 	if p, result := m.updateConfigMap(ctx, instance); !result.Yield() {
 		planner = p
@@ -395,4 +399,87 @@ func (m *IscsiGatewayManager) updateStatefulSetSize(
 
 func sharedStatePVCName(planner *pln.Planner) string {
 	return planner.InstanceName() + "-state"
+}
+
+func (m *IscsiGatewayManager) checkPool(
+	ctx context.Context,
+	ig *iscsigateway.Iscsigateway) Result {
+
+	for i := 1; i < len(ig.Spec.Storage); i++ {
+		poolname := ig.Spec.Storage[i].PoolName
+		poolspec := ig.Spec.Storage[i].CephpoolSpec
+		ns := m.cfg.RookNamespace
+		pool, created, err := m.getOrCreatePool(ctx, poolname, ns, poolspec, ig)
+		if err != nil {
+			return Result{err: err}
+		}
+		if created {
+			m.logger.Info("Create CephBlockPool",
+				"CephBlockPool.Name", pool.Name,
+				"CpehBlockPool.Namespace", pool.Namespace,
+			)
+			return Requeue
+		}
+		if pool != nil {
+			// add finalizer
+			changed := controllerutil.AddFinalizer(pool, ig.Name)
+			if changed {
+				m.logger.Info("add finalizer %s to pool %s", ig.Name, poolname)
+				return Requeue
+			}
+		} else {
+			// pool already bean used. change pool name.
+			return Done
+		}
+	}
+
+	// remove finalizer from deleted pool
+	configMap, err := m.getExistingConfigmap(ctx, ig.Name, ig.Namespace)
+
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			m.logger.Error(
+				err,
+				"Failed to get configMap",
+				"configMap.Namespace", ig.Namespace,
+				"configMap.Name", ig.Name,
+			)
+			return Result{err: err}
+		}
+		return Done
+	}
+	cc, err := getContainerConfig(configMap)
+	if err != nil {
+		m.logger.Error(err, "Unable to read iscsi container config")
+		return Result{err: err}
+	}
+
+	new_pool_list := make([]string, len(ig.Spec.Storage))
+	for i := 0; i < len(ig.Spec.Storage); i++ {
+		new_pool_list[i] = ig.Spec.Storage[i].PoolName
+	}
+	for k := range cc.Storage {
+		if !pln.Exist(k, new_pool_list) {
+			// remove finalizer in pool
+			pool, err := m.getExistingPool(ctx, k, m.cfg.RookNamespace)
+			if err != nil {
+				m.logger.Error(err,
+					"Failed to get exist pool which may exist",
+					"CephBlockPool.Name", k,
+					"CephBlockPool.Namespace", m.cfg.RookNamespace)
+				return Result{err: err}
+			}
+			if pool != nil {
+				// remove finalizer
+				changed := controllerutil.RemoveFinalizer(pool, ig.Name)
+				if changed {
+					m.logger.Info("delete finalizer %s to pool %s", ig.Name, k)
+					return Requeue
+				}
+				// delete pool
+			}
+		}
+	}
+
+	return Done
 }

@@ -23,6 +23,7 @@ import (
 
 	iscsiv1alpha1 "github.com/Erichorng/iscsi-operator/api/v1alpha1"
 	"github.com/Erichorng/iscsi-operator/internal/resource"
+	rook "github.com/rook/rook/pkg/apis/ceph.rook.io/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
@@ -49,6 +50,7 @@ type IscsigatewayReconciler struct {
 // +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=events,verbs=create
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=ceph.rook.io,resources=cephblockpools,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -84,6 +86,6 @@ func (r *IscsigatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.ConfigMap{}).
 		Owns(&appsv1.DaemonSet{}).
 		Owns(&appsv1.StatefulSet{}).
+		Owns(&rook.CephBlockPool{}).
 		Complete(r)
-	// TODO: add Owns
 }

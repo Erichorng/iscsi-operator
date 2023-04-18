@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	rook "github.com/rook/rook/pkg/apis/ceph.rook.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -43,8 +44,9 @@ type IscsigatewaySpec struct {
 }
 
 type IscsiStorageSpec struct {
-	PoolName string          `json:"poolname"`
-	Disks    []IscsiDiskSpec `json:"disks"`
+	PoolName     string          `json:"poolname"`
+	Disks        []IscsiDiskSpec `json:"disks"`
+	CephpoolSpec rook.PoolSpec   `json:"poolspec"`
 }
 
 type IscsiDiskSpec struct {

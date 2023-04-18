@@ -30,7 +30,7 @@ func sameStringSlice(x, y []string) bool {
 	return len(diff) == 0
 }
 
-func exist(ss string, l []string) bool {
+func Exist(ss string, l []string) bool {
 	for _, s := range l {
 		if s == ss {
 			return true
@@ -134,7 +134,7 @@ func (pl *Planner) Update() (changed bool, err error) {
 			new_disk_list[idx] = w.DiskName
 		}
 		for k := range allDisk {
-			if !exist(k, new_disk_list) {
+			if !Exist(k, new_disk_list) {
 				delete(pl.ConfigState.Storage[goalPoolName], k)
 				changed = true
 			}
@@ -147,7 +147,7 @@ func (pl *Planner) Update() (changed bool, err error) {
 		new_pool_list[i] = pl.Iscsigateway.Spec.Storage[i].PoolName
 	}
 	for k := range pl.ConfigState.Storage {
-		if !exist(k, new_pool_list) {
+		if !Exist(k, new_pool_list) {
 			// remove the pool from configstate
 			delete(pl.ConfigState.Storage, k)
 			changed = true
@@ -196,7 +196,7 @@ func (pl *Planner) Update() (changed bool, err error) {
 		new_host_list[i] = pl.Iscsigateway.Spec.Hosts[i].HostName
 	}
 	for k := range pl.ConfigState.Hosts {
-		if !exist(k, new_host_list) {
+		if !Exist(k, new_host_list) {
 			delete(pl.ConfigState.Hosts, k)
 			changed = true
 		}
