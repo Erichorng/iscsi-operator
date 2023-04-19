@@ -95,7 +95,7 @@ func (m *IscsiGatewayManager) Update(
 		return Result{err: err}
 	}
 
-	changed, err := m.addFinalizer(ctx, instance)
+	changed, err := m.addFinalizer(ctx, instance, gatewayfinalizer)
 	if err != nil {
 		return Result{err: err}
 	}
@@ -178,10 +178,12 @@ func (m *IscsiGatewayManager) checkCephConfig(
 
 func (m *IscsiGatewayManager) addFinalizer(
 	ctx context.Context,
-	ig *iscsigateway.Iscsigateway) (bool, error) {
+	o rtclient.Object,
+	f string) (bool, error) {
 
-	if controllerutil.ContainsFinalizer(ig, gatewayfinalizer) {
-		return true, m.client.Update(ctx, ig)
+	if changed := controllerutil.AddFinalizer(o, f); changed {
+		err := m.client.Update(ctx, o)
+		return true, err
 	}
 	return false, nil
 }
@@ -405,7 +407,7 @@ func (m *IscsiGatewayManager) checkPool(
 	ctx context.Context,
 	ig *iscsigateway.Iscsigateway) Result {
 
-	for i := 1; i < len(ig.Spec.Storage); i++ {
+	for i := 0; i < len(ig.Spec.Storage); i++ {
 		poolname := ig.Spec.Storage[i].PoolName
 		poolspec := ig.Spec.Storage[i].CephpoolSpec
 		ns := m.cfg.RookNamespace
@@ -422,14 +424,31 @@ func (m *IscsiGatewayManager) checkPool(
 		}
 		if pool != nil {
 			// add finalizer
-			changed := controllerutil.AddFinalizer(pool, ig.Name)
+			changed, err := m.addFinalizer(ctx, pool, ig.Name)
+			if err != nil {
+				m.logger.Error(err,
+					"failed to add finalizer",
+					"pool.Name", pool.Name,
+					"pool.Namespace", pool.Namespace,
+				)
+				return Result{err: err}
+			}
 			if changed {
-				m.logger.Info("add finalizer %s to pool %s", ig.Name, poolname)
+				m.logger.Info("add finalizer",
+					"pool.Name", pool.Name,
+					"pool.Namespace", pool.Namespace,
+				)
 				return Requeue
 			}
+
 		} else {
 			// pool already bean used. change pool name.
-			return Done
+			err := fmt.Errorf("this pool has already been used. please change a name")
+			m.logger.Error(err,
+				"pool.Name", pool.Name,
+				"pool.Namespace", pool.Namespace,
+			)
+			return Result{err: err}
 		}
 	}
 

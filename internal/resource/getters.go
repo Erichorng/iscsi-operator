@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 
 	iscsigateway "github.com/Erichorng/iscsi-operator/api/v1alpha1"
 	pln "github.com/Erichorng/iscsi-operator/internal/planner"
@@ -12,7 +13,10 @@ import (
 	rook "github.com/rook/rook/pkg/apis/ceph.rook.io/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	kresource "k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -419,9 +423,19 @@ func (m *IscsiGatewayManager) getOrCreatePool(
 				// return nothing, and just stop reconciling
 				return nil, false, nil
 			}
+			m.logger.Info("Find pool :%s belongs to iscsigateway :%s", pool.Name, ig.Name)
+			return pool, false, nil
+		} else {
+			same, err := m.sameOwner(ctx, ig, pool)
+			if err != nil {
+				return nil, false, err
+			}
+			if same {
+				return pool, false, nil
+			}
+
+			return nil, false, nil
 		}
-		m.logger.Info("Find pool :%s belongs to iscsigateway :%s", pool.Name, ig.Name)
-		return pool, false, nil
 	}
 
 	m.logger.Info("Start creating cephblockpool.")
@@ -463,5 +477,40 @@ func (m *IscsiGatewayManager) getExistingPool(ctx context.Context, name, ns stri
 	}
 
 	return found, nil
+
+}
+func (m *IscsiGatewayManager) sameOwner(
+	ctx context.Context,
+	owner *iscsigateway.Iscsigateway,
+	controlled metav1.Object) (bool, error) {
+
+	gvk, err := apiutil.GVKForObject(owner, m.scheme)
+	if err != nil {
+		return false, err
+	}
+	ref := metav1.OwnerReference{
+		APIVersion:         gvk.GroupVersion().String(),
+		Kind:               gvk.Kind,
+		Name:               owner.GetName(),
+		UID:                owner.GetUID(),
+		BlockOwnerDeletion: pointer.Bool(true),
+		Controller:         pointer.Bool(true),
+	}
+
+	if existing := metav1.GetControllerOf(controlled); existing != nil {
+		aGV, err := schema.ParseGroupVersion(ref.APIVersion)
+		if err != nil {
+			return false, err
+		}
+
+		bGV, err := schema.ParseGroupVersion(existing.APIVersion)
+		if err != nil {
+			return false, err
+		}
+
+		return (aGV.Group == bGV.Group && ref.Kind == existing.Kind && ref.Name == existing.Name), nil
+	}
+	err = fmt.Errorf("this pool is an orphan pool. it does not have an owner")
+	return false, err
 
 }
