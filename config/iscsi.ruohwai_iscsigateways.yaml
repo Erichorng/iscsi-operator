@@ -265,7 +265,6 @@ spec:
                               description: TargetSizeRatio gives a hint (%) to Ceph
                                 in terms of expected consumption of the total cluster
                                 capacity
-                              type: number
                           required:
                           - size
                           type: object
