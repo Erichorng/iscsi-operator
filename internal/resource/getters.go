@@ -419,11 +419,11 @@ func (m *IscsiGatewayManager) getOrCreatePool(
 		// pool already have 1 finalizer when created
 		if len(finalizers) > 1 {
 			if !controllerutil.ContainsFinalizer(pool, ig.Name) {
-				m.logger.Info("Pool: %s already been used. Please change a name.", pool.Name)
+				m.logger.Info("Pool already been used. Please change a name.", pool.Name, ig.Name)
 				// return nothing, and just stop reconciling
 				return nil, false, nil
 			}
-			m.logger.Info("Find pool :%s belongs to iscsigateway :%s", pool.Name, ig.Name)
+			m.logger.Info("Find pool belongs to iscsigateway", pool.Name, ig.Name)
 			return pool, false, nil
 		} else {
 			same, err := m.sameOwner(ctx, ig, pool)
