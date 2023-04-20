@@ -121,14 +121,18 @@ func (m *IscsiGatewayManager) Update(
 
 	// make sure tcmu-runner daemon set is running
 	if result := m.updateTcmuRunner(ctx, planner); !result.Yield() {
-		m.logger.Info("Successfully update tcmu-runner")
+		m.logger.Info("Successfully update tcmu-runner",
+			"daemonset.Name", tcmuDaemonSet,
+			"daemonset.Namespace", instance.Namespace)
 	} else {
 		return result
 	}
 
 	if planner.Scale() == 1 {
 		// TODO
-		m.logger.Info("Please set the scale to a number greater then 1. Do not allow single node service")
+		m.logger.Info("Please set the scale to a number greater then 1. Do not allow single node service",
+			"iscsigateway.Name", instance.Name,
+			"iscsigateway.Namespace", instance.Namespace)
 		return Done
 
 	} else {
@@ -139,7 +143,9 @@ func (m *IscsiGatewayManager) Update(
 
 	// Update iscsi service
 
-	m.logger.Info("Done updating iscsi gateway resources")
+	m.logger.Info("Done updating iscsi gateway resources",
+		"iscsigateway.Name", instance.Name,
+		"iscsigateway.Namespace", instance.Namespace)
 	return Done
 
 }
@@ -198,7 +204,7 @@ func (m *IscsiGatewayManager) updateTcmuRunner(
 		return Result{err: err}
 	}
 	if created {
-		m.logger.Info("Created ConfigMap")
+		m.logger.Info("Created tcmu-runner Daemonset")
 		return Requeue
 	}
 
@@ -206,7 +212,7 @@ func (m *IscsiGatewayManager) updateTcmuRunner(
 	if err != nil {
 		return Result{err: err}
 	} else if changed {
-		m.logger.Info("Update Tcmu-runner ownership")
+		m.logger.Info("Update tcmu-runner ownership")
 	}
 	return Done
 }
@@ -220,7 +226,11 @@ func (m *IscsiGatewayManager) updateConfigMap(
 		return nil, Result{err: err}
 	}
 	if created {
-		m.logger.Info("Created ConfigMap")
+		m.logger.Info("Created container ConfigMap",
+			"configmap.Name", configMap.Name,
+			"configmap.Namespace", configMap.Namespace,
+			"iscsigateway.Name", ig.Name,
+			"iscsigateway.Namespace", ig.Namespace)
 		return nil, Requeue
 	}
 	// is this step already finish in getOrCreate?
@@ -236,7 +246,11 @@ func (m *IscsiGatewayManager) updateConfigMap(
 		return nil, Result{err: err}
 	}
 	if changed {
-		m.logger.Info("Updated configMap")
+		m.logger.Info("Updated configMap",
+			"configmap.Name", configMap.Name,
+			"configmap.Namespace", configMap.Namespace,
+			"iscsigateway.Name", ig.Name,
+			"iscsigateway.Namespace", ig.Namespace)
 		return nil, Requeue
 	}
 	return planner, Done
@@ -449,8 +463,9 @@ func (m *IscsiGatewayManager) checkPool(
 
 		} else {
 			// pool already bean used. change pool name.
-			err := fmt.Errorf("this pool has already been used. please change a name")
+			err := fmt.Errorf("pool already been used. please change a name")
 			m.logger.Error(err,
+				"This pool is already been used. please change a name.",
 				"pool.Name", poolname,
 				"pool.Namespace", ns,
 				"iscsigateway.Name", ig.Name,
@@ -500,7 +515,9 @@ func (m *IscsiGatewayManager) checkPool(
 				// remove finalizer
 				changed := controllerutil.RemoveFinalizer(pool, ig.Name)
 				if changed {
-					m.logger.Info("delete finalizer %s to pool %s", ig.Name, k)
+					m.logger.Info("delete finalizer from pool",
+						"finalizer", ig.Name,
+						"pool.Name", k)
 					return Requeue
 				}
 				// delete pool

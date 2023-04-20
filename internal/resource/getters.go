@@ -419,11 +419,14 @@ func (m *IscsiGatewayManager) getOrCreatePool(
 		// pool already have 1 finalizer when created
 		if len(finalizers) > 1 {
 			if !controllerutil.ContainsFinalizer(pool, ig.Name) {
-				m.logger.Info("Pool already been used. Please change a name.", pool.Name, ig.Name)
+				m.logger.Info("Pool already been used. Please change a name.",
+					"pool.Name", pool.Name)
 				// return nothing, and just stop reconciling
 				return nil, false, nil
 			}
-			m.logger.Info("Find pool belongs to iscsigateway", pool.Name, ig.Name)
+			m.logger.Info("Find pool belongs to iscsigateway",
+				"pool.Name", pool.Name,
+				"iscsigateway.Name", ig.Name)
 			return pool, false, nil
 		} else {
 			same, err := m.sameOwner(ctx, ig, pool)
@@ -442,11 +445,11 @@ func (m *IscsiGatewayManager) getOrCreatePool(
 
 	pool = buildPool(ctx, pname, ns, ps)
 
-	// set controller ref ??
 	if err := controllerutil.SetControllerReference(ig, pool, m.scheme); err != nil {
 		m.logger.Error(err,
-			"failed to set controllerReference on pool %s, owner: %s",
-			pool.Name, ig.Name)
+			"failed to set controllerReference on pool",
+			"pool.Name", pool.Name,
+			"owner.Name", ig.Name)
 		return pool, true, err
 	}
 
