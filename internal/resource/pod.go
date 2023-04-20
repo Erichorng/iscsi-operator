@@ -144,6 +144,24 @@ func buildTcmuCtr(
 		},
 		//Args: ,
 		//Env: ,
+		LivenessProbe: &corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{"cat", "/alive"},
+				},
+			},
+		},
+		ReadinessProbe: &corev1.Probe{
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       5,
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{"cat", "/alive"},
+				},
+			},
+		},
 		VolumeMounts: mounts,
 	}
 
