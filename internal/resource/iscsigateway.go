@@ -419,6 +419,8 @@ func (m *IscsiGatewayManager) checkPool(
 			m.logger.Info("Create CephBlockPool",
 				"CephBlockPool.Name", pool.Name,
 				"CpehBlockPool.Namespace", pool.Namespace,
+				"iscsigateway.Name", ig.Name,
+				"iscsigateway.Namespace", ig.Namespace,
 			)
 			return Requeue
 		}
@@ -430,6 +432,8 @@ func (m *IscsiGatewayManager) checkPool(
 					"failed to add finalizer",
 					"pool.Name", pool.Name,
 					"pool.Namespace", pool.Namespace,
+					"iscsigateway.Name", ig.Name,
+					"iscsigateway.Namespace", ig.Namespace,
 				)
 				return Result{err: err}
 			}
@@ -437,6 +441,8 @@ func (m *IscsiGatewayManager) checkPool(
 				m.logger.Info("add finalizer",
 					"pool.Name", pool.Name,
 					"pool.Namespace", pool.Namespace,
+					"iscsigateway.Name", ig.Name,
+					"iscsigateway.Namespace", ig.Namespace,
 				)
 				return Requeue
 			}
@@ -445,8 +451,10 @@ func (m *IscsiGatewayManager) checkPool(
 			// pool already bean used. change pool name.
 			err := fmt.Errorf("this pool has already been used. please change a name")
 			m.logger.Error(err,
-				"pool.Name", pool.Name,
-				"pool.Namespace", pool.Namespace,
+				"pool.Name", poolname,
+				"pool.Namespace", ns,
+				"iscsigateway.Name", ig.Name,
+				"iscsigateway.Namespace", ig.Namespace,
 			)
 			return Result{err: err}
 		}
