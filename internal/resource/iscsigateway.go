@@ -521,6 +521,14 @@ func (m *IscsiGatewayManager) checkPool(
 					return Requeue
 				}
 				// delete pool
+				err := m.client.Delete(ctx, pool)
+				if err != nil {
+					m.logger.Error(err,
+						"Failed to delete pool.",
+						"Pool.Name", pool.Name,
+						"Pool.Namespace", pool.Namespace,
+					)
+				}
 			}
 		}
 	}
