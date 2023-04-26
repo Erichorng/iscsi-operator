@@ -440,7 +440,7 @@ func (m *IscsiGatewayManager) checkPool(
 		}
 		if pool != nil {
 			// add finalizer
-			changed, err := m.addFinalizer(ctx, pool, ig.Name)
+			/* changed, err := m.addFinalizer(ctx, pool, ig.Name)
 			if err != nil {
 				m.logger.Error(err,
 					"failed to add finalizer",
@@ -459,7 +459,7 @@ func (m *IscsiGatewayManager) checkPool(
 					"iscsigateway.Namespace", ig.Namespace,
 				)
 				return Requeue
-			}
+			} */
 
 		} else {
 			// pool already bean used. change pool name.
@@ -513,13 +513,13 @@ func (m *IscsiGatewayManager) checkPool(
 			}
 			if pool != nil {
 				// remove finalizer
-				changed := controllerutil.RemoveFinalizer(pool, ig.Name)
+				/* changed := controllerutil.RemoveFinalizer(pool, ig.Name)
 				if changed {
 					m.logger.Info("delete finalizer from pool",
 						"finalizer", ig.Name,
 						"pool.Name", k)
 					return Requeue
-				}
+				} */
 				// delete pool
 				err := m.client.Delete(ctx, pool)
 				if err != nil {

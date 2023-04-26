@@ -415,7 +415,8 @@ func (m *IscsiGatewayManager) getOrCreatePool(
 	}
 	if pool != nil {
 		// check if the pool belongs to itself, if not, user should set another pool name
-		finalizers := pool.GetFinalizers()
+		/* finalizers := pool.GetFinalizers()
+
 		// pool already have 1 finalizer when created
 		if len(finalizers) > 1 {
 			if !controllerutil.ContainsFinalizer(pool, ig.Name) {
@@ -438,7 +439,17 @@ func (m *IscsiGatewayManager) getOrCreatePool(
 			}
 
 			return nil, false, nil
+		} */
+		same, err := m.sameOwner(ctx, ig, pool)
+		if err != nil {
+			return nil, false, err
 		}
+		if same {
+			return pool, false, nil
+		} else {
+			return nil, false, nil
+		}
+
 	}
 
 	m.logger.Info("Start creating cephblockpool.")
@@ -462,7 +473,7 @@ func (m *IscsiGatewayManager) getOrCreatePool(
 			"CephBlockPool.Name", pool.Name,
 			"CephBlockPool.Namespace", pool.Namespace,
 		)
-		return pool, false, err
+		return pool, true, err
 	}
 	return pool, true, nil
 }
