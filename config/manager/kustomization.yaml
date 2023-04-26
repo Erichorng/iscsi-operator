@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: ruohwai/iscsi
-  newTag: v0.0.17
+  newTag: v0.0.36

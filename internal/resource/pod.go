@@ -142,26 +142,38 @@ func buildTcmuCtr(
 		SecurityContext: &corev1.SecurityContext{
 			Privileged: &t,
 		},
-		//Args: ,
 		//Env: ,
+		StartupProbe: &corev1.Probe{
+			InitialDelaySeconds: 1,
+			PeriodSeconds:       5,
+			TimeoutSeconds:      3,
+			SuccessThreshold:    1,
+			FailureThreshold:    3,
+			ProbeHandler: corev1.ProbeHandler{
+				Exec: &corev1.ExecAction{
+					Command: []string{"/bin/bash", "-c", "/check-tcmu-runner.sh"},
+				},
+			},
+		},
 		LivenessProbe: &corev1.Probe{
-			InitialDelaySeconds: 10,
+			InitialDelaySeconds: 5,
 			PeriodSeconds:       5,
+			TimeoutSeconds:      3,
 			ProbeHandler: corev1.ProbeHandler{
 				Exec: &corev1.ExecAction{
-					Command: []string{"cat", "/alive"},
+					Command: []string{"/bin/bash", "-c", "/check-tcmu-runner.sh"},
 				},
 			},
 		},
-		ReadinessProbe: &corev1.Probe{
-			InitialDelaySeconds: 10,
-			PeriodSeconds:       5,
-			ProbeHandler: corev1.ProbeHandler{
-				Exec: &corev1.ExecAction{
-					Command: []string{"cat", "/alive"},
-				},
-			},
-		},
+		//ReadinessProbe: &corev1.Probe{
+		//InitialDelaySeconds: 5,
+		//PeriodSeconds:       5,
+		//ProbeHandler: corev1.ProbeHandler{
+		//Exec: &corev1.ExecAction{
+		//Command: []string{"/check-tcmu-runner.sh"},
+		//},
+		//},
+		//},
 		VolumeMounts: mounts,
 	}
 

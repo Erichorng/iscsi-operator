@@ -12,7 +12,7 @@ import (
 var DefaultOperatorConfig = OperatorConfig{
 	IscsiContainerImage: "ruohwai/iscsi:v17.2.2",
 	IscsiContainerName:  "iscsi",
-	TcmuRunnerImage:     "ruohwai/iscsi:v17.2.2.tcmu",
+	TcmuRunnerImage:     "ruohwai/iscsi:tcmu-with-liveness-check",
 	TcmuRunnerName:      "tcmu-runner",
 	ImagePullPolicy:     "IfNotPresent",
 	PoolName:            "rbd",
